@@ -54,6 +54,10 @@ try:
     #read multiplier
     multiplier=format(resp.registers[1], '04x')
     fmultiplier=int(struct.unpack('>h', multiplier.decode('hex'))[0])
+    if fmultiplier == 2:
+        fwr1watt = wr1watt * 100
+    if fmultiplier == 1:
+        fwr1watt = wr1watt * 10
     if fmultiplier == 0:
         fwr1watt = wr1watt
     if fmultiplier == -1:
@@ -66,6 +70,11 @@ try:
         fwr1watt = wr1watt / 10000
     if fmultiplier == -5:
         fwr1watt = wr1watt / 10000
+    resp= client.read_holding_registers(40093,2,unit=slave1id)
+    value1 = resp.registers[0]
+    value2 = resp.registers[1]
+    all = format(value1, '04x') + format(value2, '04x')
+    final = int(struct.unpack('>i', all.decode('hex'))[0])
 except:
     fwr1watt=0
 if slave2id != 0:
@@ -77,7 +86,10 @@ if slave2id != 0:
         #read multiplier
         multiplier=format(resp.registers[1], '04x')
         fmultiplier=int(struct.unpack('>h', multiplier.decode('hex'))[0])
-
+        if fmultiplier == 2:
+            fwr2watt = wr2watt * 100
+        if fmultiplier == 1:
+            fwr2watt = wr2watt * 10
         if fmultiplier == 0:
             fwr2watt = wr2watt
         if fmultiplier == -1:
@@ -90,6 +102,11 @@ if slave2id != 0:
             fwr2watt = wr2watt / 10000
         if fmultiplier == -5:
             fwr2watt = wr2watt / 10000
+        resp= client.read_holding_registers(40093,2,unit=slave2id)
+        value1 = resp.registers[0]
+        value2 = resp.registers[1]
+        all = format(value1, '04x') + format(value2, '04x')
+        final = final + int(struct.unpack('>i', all.decode('hex'))[0])
     except:
         fwr2watt=0
 else:
@@ -103,6 +120,10 @@ if slave3id != 0:
         #read multiplier
         multiplier=format(resp.registers[1], '04x')
         fmultiplier=int(struct.unpack('>h', multiplier.decode('hex'))[0])
+        if fmultiplier == 2:
+            fwr3watt = wr3watt * 100
+        if fmultiplier == 1:
+            fwr3watt = wr3watt * 10
 
         if fmultiplier == 0:
             fwr3watt = wr3watt
@@ -116,6 +137,11 @@ if slave3id != 0:
             fwr3watt = wr3watt / 10000
         if fmultiplier == -5:
             fwr3watt = wr3watt / 10000
+        resp= client.read_holding_registers(40093,2,unit=slave3id)
+        value1 = resp.registers[0]
+        value2 = resp.registers[1]
+        all = format(value1, '04x') + format(value2, '04x')
+        final = final + int(struct.unpack('>i', all.decode('hex'))[0])
     except:
         fwr3watt=0
 else:
@@ -129,6 +155,10 @@ if slave4id != 0:
         #read multiplier
         multiplier=format(resp.registers[1], '04x')
         fmultiplier=int(struct.unpack('>h', multiplier.decode('hex'))[0])
+        if fmultiplier == 2:
+            fwr4watt = wr4watt * 100
+        if fmultiplier == 1:
+            fwr4watt = wr4watt * 10
 
         if fmultiplier == 0:
             fwr4watt = wr4watt
@@ -142,6 +172,11 @@ if slave4id != 0:
             fwr4watt = wr4watt / 10000
         if fmultiplier == -5:
             fwr4watt = wr4watt / 10000
+        resp= client.read_holding_registers(40093,2,unit=slave4id)
+        value1 = resp.registers[0]
+        value2 = resp.registers[1]
+        all = format(value1, '04x') + format(value2, '04x')
+        final = final + int(struct.unpack('>i', all.decode('hex'))[0])
     except:
         fwr4watt=0
 else:
@@ -149,10 +184,13 @@ else:
 
 
 if extprodakt == 1:    
-    resp= client.read_holding_registers(40380,1,unit=slave1id)
-    value1 = resp.registers[0]
-    all = format(value1, '04x')
-    extprod = int(struct.unpack('>h', all.decode('hex'))[0]) * -1
+    try:
+        resp= client.read_holding_registers(40380,1,unit=slave1id)
+        value1 = resp.registers[0]
+        all = format(value1, '04x')
+        extprod = int(struct.unpack('>h', all.decode('hex'))[0]) * -1
+    except:
+        extprod = 0
 else:
     extprod = 0
 allwatt=fwr1watt+fwr2watt+fwr3watt+fwr4watt-storagepower+extprod
@@ -161,11 +199,7 @@ f.write(str(allwatt))
 f.close()
 
 
-resp= client.read_holding_registers(40093,2,unit=slave1id)
-value1 = resp.registers[0]
-value2 = resp.registers[1]
-all = format(value1, '04x') + format(value2, '04x')
-final = int(struct.unpack('>i', all.decode('hex'))[0])
+
 f = open('/var/www/html/openWB/ramdisk/pvkwh', 'w')
 f.write(str(final))
 f.close()

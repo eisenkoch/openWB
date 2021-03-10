@@ -57,8 +57,6 @@ var d8bgCol = style.getPropertyValue('--d8bgCol');
 var d9Col = style.getPropertyValue('--d9Col');
 var d9bgCol = style.getPropertyValue('--d9bgCol');
 
-var awattartime = [];
-var graphawattarprice;
 var initialread = 0;
 var graphloaded = 0;
 var boolDisplayHouseConsumption;
@@ -135,7 +133,7 @@ var all16p;
 var hidehaus;
 var myLine;
 
-function loadgraph() {
+function loadgraph(animationDuration = 1000) {
 	var lineChartData = {
 		labels: atime,
 		datasets: [{
@@ -505,6 +503,13 @@ function loadgraph() {
 					radius: 0
 				}
 			},
+			animation: {
+				duration: animationDuration,
+				onComplete: function(animation) {
+					// if duration was set to 0 to avoid pumping after reload, set back to default
+					this.options.animation.duration = 1000
+        		}
+			},
 			responsive: true,
 			maintainAspectRatio: false,
 			hover: {
@@ -771,7 +776,7 @@ function updateGraph(dataset) {
 function checkgraphload(){
 	if ( graphloaded == 1 ) {
        	myLine.destroy();
-		loadgraph();
+		loadgraph(0);  // when reloading graph, no more "pumping" animations
 		return;
 	}
 	if ( typeof boolDisplayHouseConsumption === "boolean" &&

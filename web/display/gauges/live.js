@@ -165,6 +165,7 @@ var thevalues = [
 	["openWB/lp/8/kWhChargedSincePlugged", "#pluggedladungbishergeladenlp8div"],
 	["openWB/global/ChargeMode", "#"],
 	["openWB/global/WAllChargePoints", "#"],
+	["openWB/global/rfidConfigured", "#"],
 	["openWB/housebattery/W", "#speicherleistungdiv"],
 	["openWB/housebattery/%Soc", "#"],
 	["openWB/global/strLastmanagementActive", "#lastregelungaktivdiv"],
@@ -877,6 +878,13 @@ function handlevar(mqttmsg, mqttpayload, mqtttopic, htmldiv) {
 			reloadDisplay();
 		}
 	}
+	else if ( mqttmsg == "openWB/global/rfidConfigured" ) {
+		if ( mqttpayload == "0" ) {
+			$('#pinpad').addClass('hide');
+		} else {
+			$('#pinpad').removeClass('hide');
+		}
+	}
 	else {
 		thevalues.forEach(function(thevar){
 			if ( mqttmsg == thevar[0] ) {
@@ -903,6 +911,10 @@ var options = {
 	useSSL: isSSL,
 	//Gets Called if the connection has sucessfully been established
 	onSuccess: function () {
+		$('#backend .connectionState').text("verbunden");
+		// $('#backend .reloadBtn').addClass('hide');
+		$('#backend .counter').text(retries+1);
+		console.log("connected, resetting counter");
 		retries = 0;
 		thevalues.forEach(function(thevar) {
 			client.subscribe(thevar[0], {qos: 0});
@@ -910,9 +922,14 @@ var options = {
 	},
 	//Gets Called if the connection could not be established
 	onFailure: function (message) {
+		retries = retries + 1;
+		console.log("connection failed, incrementing counter: " + retries);
+		$('#backend .connectionState').text("getrennt");
+		// $('#backend .reloadBtn').removeClass('hide');
+		$('#backend .counter').text(retries+1);
 		client.connect(options);
 	}
-	};
+};
 
 //Creates a new Messaging.Message Object and sends it
 var publish = function (payload, topic) {

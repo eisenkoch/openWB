@@ -241,6 +241,10 @@ ECHODAYROWTAIL;
 
 		<div role="main" class="container" style="margin-top:20px">
 			<h1>Autolock Einstellungen</h1>
+			<div class="alert alert-info">
+				Diese Einstellungen ermöglichen es, dass man jeden konfigurierten Ladepunkt zu bestimmten Zeiten automatisiert sperren bzw. wieder entsperren kann.
+				Ein möglicher Anwendungsfall wäre das Bereitstellen von Lademöglichkeiten nur während der Öffnungszeiten.
+			</div>
 			<form class="form" action="./tools/saveautolock.php" method="POST">
 
 				<?php
@@ -249,10 +253,10 @@ ECHODAYROWTAIL;
 						// build form-groups for all lp
 						if ( $isConfiguredLp[$lp] ) {
 							// if lp is configured: display form-group
-							$visibility = '';
+							$visibilityClass = '';
 						} else {
 							// if lp is not configured: hide form-group
-							$visibility = ' display: none;';
+							$visibilityClass = ' hide';
 						}
 						// remove special characters except space and underscore... maybe dangerous
 						$nameLp = preg_replace('/[^A-Za-z0-9_ ]/', '', $settingsArray['lp'.$lp.'name']);
@@ -268,7 +272,7 @@ ECHODAYROWTAIL;
 						}
 
 						echo <<<ECHOFORMGROUPHEAD
-				<div class="card border-secondary" style="{$visibility}" id="lp{$lp}">  <!-- group charge point {$lp} -->
+				<div class="card border-secondary{$visibilityClass}" id="lp{$lp}">  <!-- group charge point {$lp} -->
 					<div class="card-header bg-secondary">
 						Ladepunkt {$lp} ({$nameLp})
 					</div>
@@ -292,7 +296,7 @@ ECHOFORMGROUPHEAD;
 						echo <<<ECHOFORMGROUPTAIL
 					</div> <!-- card body -->
 					<div class="card-footer text-center">
-						<button type="button" class="btn btn-sm btn-red resetForm" id="resetFormBtnLp{$lp}">LP{$lp} zurücksetzen</button>
+						<button type="button" class="btn btn-sm btn-danger resetForm" id="resetFormBtnLp{$lp}">LP{$lp} zurücksetzen</button>
 					</div>
 				</div>  <!-- end form-group charge point {$lp} -->
 
@@ -471,7 +475,7 @@ ECHOFORMGROUPTAIL;
 
 					<!-- modal footer -->
 					<div class="modal-footer justify-content-center">
-						<button type="button" class="btn btn-green" data-dismiss="modal">OK</button>
+						<button type="button" class="btn btn-success" data-dismiss="modal">OK</button>
 					</div>
 
 				</div>
