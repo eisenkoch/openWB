@@ -22,8 +22,9 @@ sudo chmod 777 /var/www/html/openWB/web/files/*
 sudo chmod -R +x /var/www/html/openWB/modules/*
 
 sudo chmod -R 777 /var/www/html/openWB/modules/soc_i3
+sudo chmod -R 777 /var/www/html/openWB/modules/soc_eq
+sudo chmod -R 777 /var/www/html/openWB/modules/soc_tesla
 
-sudo chmod 777 /var/www/html/openWB/modules/soc_eq/*
 sudo chmod 777 /var/www/html/openWB/web/files/*
 sudo chmod -R +x /var/www/html/openWB/modules/*
 
@@ -40,10 +41,16 @@ updateConfig
 # now setup all files in ramdisk
 initRamdisk
 
+# standard socket - activated after reboot due to RASPI init defaults so we need to disable it as soon as we can
+if [[ $standardSocketInstalled == "1" ]]; then
+	echo "turning off standard socket ..."
+	sudo python /var/www/html/openWB/runs/standardSocket.py off
+fi
+
 # initialize automatic phase switching
 if (( u1p3paktiv == 1 )); then
 	echo "triginit..."
-	sudo python /var/www/html/openWB/runs/triginit.py
+	sudo python /var/www/html/openWB/runs/triginit.py -d $u1p3ppause
 fi
 
 # check if buttons are configured and start daemon
@@ -256,6 +263,12 @@ if python3 -c "import pymodbus" &> /dev/null; then
 else
 	sudo pip3 install pymodbus
 fi
+#Prepare for jq in Python
+if python3 -c "import jq" &> /dev/null; then
+	echo 'jq installed...'
+else
+	sudo pip3 install jq
+fi
 
 # update version
 echo "version..."
@@ -381,16 +394,29 @@ fi
 #prepare for Buster
 echo -n "fix upload limit..."
 if [ -d "/etc/php/7.0/" ]; then
-        echo "OS Stretch"
-        sudo /bin/su -c "echo 'upload_max_filesize = 300M' > /etc/php/7.0/apache2/conf.d/20-uploadlimit.ini"
-        sudo /bin/su -c "echo 'post_max_size = 300M' >> /etc/php/7.0/apache2/conf.d/20-uploadlimit.ini"
+	echo "OS Stretch"
+	sudo /bin/su -c "echo 'upload_max_filesize = 300M' > /etc/php/7.0/apache2/conf.d/20-uploadlimit.ini"
+	sudo /bin/su -c "echo 'post_max_size = 300M' >> /etc/php/7.0/apache2/conf.d/20-uploadlimit.ini"
 elif [ -d "/etc/php/7.3/" ]; then
-        echo "OS Buster"
-        sudo /bin/su -c "echo 'upload_max_filesize = 300M' > /etc/php/7.3/apache2/conf.d/20-uploadlimit.ini"
-        sudo /bin/su -c "echo 'post_max_size = 300M' >> /etc/php/7.3/apache2/conf.d/20-uploadlimit.ini"
+	echo "OS Buster"
+	sudo /bin/su -c "echo 'upload_max_filesize = 300M' > /etc/php/7.3/apache2/conf.d/20-uploadlimit.ini"
+	sudo /bin/su -c "echo 'post_max_size = 300M' >> /etc/php/7.3/apache2/conf.d/20-uploadlimit.ini"
 fi
 sudo /usr/sbin/apachectl -k graceful
 
+# check if ocpp is configured and start daemon
+if (( ocpp_enable == 1 )); then
+	echo "ocpp_enable..."
+	if ! [ -x "$(command -v nmcli)" ]; then
+		if ps ax |grep -v grep |grep "python3.7 /var/www/html/openWB/runs/OCPP_ChargePoint.py" > /dev/null
+		then
+			echo "test" > /dev/null
+		else
+			sudo python3.7 /var/www/html/openWB/runs/OCPP_ChargePoint.py &
+			echo "ocpp..... done"
+		fi
+	fi
+fi
 # all done, remove boot and update status
 echo $(date +"%Y-%m-%d %H:%M:%S:") "boot done :-)"
 echo 0 > /var/www/html/openWB/ramdisk/bootinprogress

@@ -169,6 +169,8 @@ fi
 
 sudo apt-get -qq install -y python-pip
 sudo pip install  -U pymodbus
+sudo pip install -U ocpp
+sudo pip install -U websockets
 echo "www-data ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers.d/010_pi-nopasswd
 
 chmod 777 /var/www/html/openWB/openwb.conf
