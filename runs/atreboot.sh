@@ -12,6 +12,8 @@ echo "loading config"
 . /var/www/html/openWB/runs/updateConfig.sh
 
 sleep 5
+mkdir -p /var/www/html/openWB/web/backup
+touch /var/www/html/openWB/web/backup/.donotdelete
 sudo chown -R www-data:www-data /var/www/html/openWB/web/backup
 sudo chown -R www-data:www-data /var/www/html/openWB/web/tools/upload
 sudo chmod 777 /var/www/html/openWB/openwb.conf
@@ -417,6 +419,7 @@ if (( ocpp_enable == 1 )); then
 		fi
 	fi
 fi
+
 # all done, remove boot and update status
 echo $(date +"%Y-%m-%d %H:%M:%S:") "boot done :-)"
 echo 0 > /var/www/html/openWB/ramdisk/bootinprogress
