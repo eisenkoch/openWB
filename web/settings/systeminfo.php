@@ -117,17 +117,15 @@
 							</p>
 							IP-Adresse LAN: <span id="iplan">--</span><br>
 							IP-Adresse WLAN: <span id="ipwifi">--</span>
-							<div class="hide" id="wifidata">
-								<ul>
-									<li><span id="wifissid">--</span></li>
-									<li><span id="wifimode">--</span></li>
-									<li><span id="wifiqualy">--</span></li>
-									<li><span id="wifibitrate">--</span></li>
-									<li><span id="wifipower">--</span></li>
-									<li><span id="wifirx">--</span></li>
-									<li><span id="wifitx">--</span>
-								</ul>
-							</div>
+							<ul>
+								<li><span id="wifissid">--</span></li>
+								<li><span id="wifimode">--</span></li>
+								<li><span id="wifiqualy">--</span></li>
+								<li><span id="wifibitrate">--</span></li>
+								<li><span id="wifipower">--</span></li>
+								<li><span id="wifirx">--</span></li>
+								<li><span id="wifitx">--</span>
+							</ul>
 						</div>
 					</div>
 				</div>
@@ -207,7 +205,6 @@
 							$('#iplan').text('--');
 						}
 						if (json.wlanaddr != '') {
-							$('#wifidata').show();
 							$('#ipwifi').text(json.wlanaddr);
 							$('#wifiqualy').text(json.wlanqualy);
 							$('#wifissid').text(json.wlanssid);
@@ -217,19 +214,19 @@
 							$('#wifirx').text(json.wlanrx);
 							$('#wifitx').text(json.wlantx);
 						} else {
-							$('#wifidata').hide();
 							$('#ipwifi').text('--');
 						}
 
 						const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', timeZoneName: 'short' };
-						var systemTimeDate = new Date(json.systime * 1000);  // json comes in Unix-time without milliseconds
+						var systemTimeDate = new Date(json.systime * 1000);
 						var formattedSystemTime = systemTimeDate.toLocaleDateString(undefined, options);
 						$('#systemtime').text(formattedSystemTime);
-						var lastRebootTimeDate = new Date(json.lastreboot * 1000);  // json comes in Unix-time without milliseconds
+
+						var lastRebootTimeDate = new Date(json.lastreboot);
 						var formattedLastRebootTime = lastRebootTimeDate.toLocaleDateString(undefined, options);
 						$('#lastreboot').text(formattedLastRebootTime);
 
-						var upTimeUnix = json.systime - json.lastreboot;
+						var upTimeUnix = (systemTimeDate - lastRebootTimeDate) / 1000;
 						var weeksUp = Math.floor(upTimeUnix / 604800);
 						upTimeUnix -= weeksUp * 604800;
 						var daysUp = Math.floor(upTimeUnix / 86400);

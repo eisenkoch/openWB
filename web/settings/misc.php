@@ -1483,20 +1483,79 @@
 					<div class="card-body">
 						<div class="form-group">
 						<div class="form-row mb-1">
-								<div class="col-md-4">
-									<label class="col-form-label">OCPP enable</label>
-								</div>
-								<div class="col">
-									<div class="btn-group btn-block btn-group-toggle" data-toggle="buttons">
-										<label class="btn btn-outline-info<?php if($ocpp_enableold == 0) echo " active" ?>">
-											<input type="radio" name="ocpp_enable" id="ocpp_enableOff" value="0"<?php if($ocpp_enableold == 0) echo " checked=\"checked\"" ?>>Nein
-										</label>
-										<label class="btn btn-outline-info<?php if($ocpp_enableold == 1) echo " active" ?>">
-											<input type="radio" name="ocpp_enable" id="ocpp_enableOn" value="1"<?php if($ocpp_enableold == 1) echo " checked=\"checked\"" ?>>Ja
-										</label>
-									</div>
+							<div class="col-md-4">
+								<label class="col-form-label">OCPP enable</label>
+							</div>
+							<div class="col">
+								<div class="btn-group btn-block btn-group-toggle" data-toggle="buttons">
+									<label class="btn btn-outline-info<?php if($ocpp_enableold == 0) echo " active" ?>">
+										<input type="radio" name="ocpp_enable" id="ocpp_enableOff" value="0"<?php if($ocpp_enableold == 0) echo " checked=\"checked\"" ?>>Nein
+									</label>
+									<label class="btn btn-outline-info<?php if($ocpp_enableold == 1) echo " active" ?>">
+										<input type="radio" name="ocpp_enable" id="ocpp_enableOn" value="1"<?php if($ocpp_enableold == 1) echo " checked=\"checked\"" ?>>Ja
+									</label>
 								</div>
 							</div>
+						</div>
+						<div class="card-body hide" id="ocppan">
+						<div class="form-row mb-1">
+								<label for="ocpp_endpoint" class="col-md-4 col-form-label">OCPP Endpoint URL</label>
+								<div class="col">
+										<input class="form-control" type="text" name="ocpp_endpoint" id="ocpp_endpoint" value="<?php echo $ocpp_endpointold ?>">
+										<span class="form-text small">Angabe der Endpoint URL (ws://Endpoint oder wss://Endpoint)</span>
+								</div>
+						</div>
+						<div class="form-row mb-1">
+								<label for="ocpp_CPID" class="col-md-4 col-form-label">OCPP ID des Endpoints</label>
+								<div class="col">
+										<input class="form-control" type="text" name="ocpp_CPID" id="ocpp_CPID" value="<?php echo $ocpp_CPIDold ?>">
+										<span class="form-text small">Eindeutige ID des Endpoints/Wallbox</span>
+								</div>
+						</div>
+						<div class="form-row mb-1">
+							<div class="col-md-4">
+								<label class="col-form-label">OCPP BasicAuth</label>
+							</div>
+							<div class="col">
+								<div class="btn-group btn-block btn-group-toggle" data-toggle="buttons">
+									<label class="btn btn-outline-info<?php if($ocpp_enable_bAuthold == 0) echo " active" ?>">
+										<input type="radio" name="ocpp_enable_bAuth" id="ocpp_enable_bAuthOff" value="0"<?php if($ocpp_enable_bAuthold == 0) echo " checked=\"checked\"" ?>>Nein
+									</label>
+									<label class="btn btn-outline-info<?php if($ocpp_enableold == 1) echo " active" ?>">
+										<input type="radio" name="ocpp_enable_bAuth" id="ocpp_enable_bAuthOn" value="1"<?php if($ocpp_enable_bAuthold == 1) echo " checked=\"checked\"" ?>>Ja
+									</label>
+								</div>
+							</div>
+						</div>
+						<div class="form-row mb-1">
+								<label class="col-md-4 col-form-label">OCPP Server Zugangsdaten</label>
+								<div class="col">
+										<input class="form-control" type="text" name="ocpp_bAuth_User" id="ocpp_bAuth_User" value="<?php echo $ocpp_bAuth_Userold ?>">
+										<span class="form-text small">Benutzername</span>
+								</div>
+								<div class="col">
+										<input class="form-control" type="text" name="ocpp_bAuth_Password" id="ocpp_bAuth_Password" value="<?php echo $ocpp_bAuth_Passwordold ?>">
+										<span class="form-text small">Passwort</span>
+								</div>
+						</div>
+						</div>
+						<script>
+						function visibility_ocpp_enable() {
+							if($('#ocpp_enableOff').prop("checked")) {
+								hideSection('#ocppan');
+							} else {
+								showSection('#ocppan');
+							}
+						}
+
+						$(document).ready(function(){
+							$('input[type=radio][name=ocpp_enable]').change(function(){
+								visibility_ocpp_enable();
+							});
+
+							visibility_ocpp_enable();
+						});
+					</script>
 						</div>
 					</div>
 				</div>
