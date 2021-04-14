@@ -92,7 +92,7 @@ fi
 echo "check for initial git clone"
 if [ ! -d /var/www/html/openWB/web ]; then
 	cd /var/www/html/
-	git clone https://github.com/eisenkoch/openWB.git --branch ocpp
+	git clone https://github.com/snaptec/openWB.git --branch master
 	chown -R pi:pi openWB 
 	echo "... git cloned"
 else
@@ -127,7 +127,18 @@ else
 	echo "...added"
 fi
 
-
+#echo "check for MCP4725"
+####### Library is deprecated. the manual install doesn't work anymore pip3 install for compatibility reasons
+#if [ ! -d /home/pi/Adafruit_Python_MCP4725 ]; then
+	#apt-get install build-essential python-dev
+	#cd /home/pi
+	#git clone https://github.com/adafruit/Adafruit_Python_MCP4725.git
+	#cd Adafruit_Python_MCP4725
+	#python setup.py install
+	#echo "... installed"
+#else
+	#echo "...ok"
+#fi
 
 echo "check for socat"
 if ! [ -x "$(command -v socat)" ]; then
@@ -194,17 +205,6 @@ if python -c "import Adafruit_MCP4725" &> /dev/null; then
         echo 'Adafruit_MCP4725 installed...'
 else
         sudo pip install Adafruit_MCP4725
-fi
-
-if python3 -c "import ocpp" &> /dev/null; then
-	echo 'ocpp installed...'
-else
-        sudo pip3 install ocpp
-fi
-if python3 -c "import websockets" &> /dev/null; then
-	echo 'websockets installed...'
-else
-        sudo pip3 install websockets
 fi
 
 echo "www-data ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers.d/010_pi-nopasswd

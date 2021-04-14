@@ -456,23 +456,23 @@
 									</div>
 								</div>
 								<div class="form-row mb-1">
-									<label for="vzloggerkwhline" class="col-md-4 col-form-label">Vzlogger Bezug kWh Zeile</label>
+									<label for="vzloggerkwhline" class="col-md-4 col-form-label">Vzlogger Bezug Wh Zeile</label>
 									<div class="col">
 										<input class="form-control" type="text" name="vzloggerkwhline" id="vzloggerkwhline" value="<?php echo $vzloggerkwhlineold ?>">
 										<span class="form-text small">
 											Gültige Werte z.B. Zahl. Bitte auf der Shell ausführen: "curl -s IPdesVZLogger:Port/ | jq .|cat -n"<br>
-											Nun zählen in welcher Zeile die Gesamt kWh stehen und diesen hier eintragen. Der Wert dient rein dem Logging.
+											Nun zählen in welcher Zeile die Gesamt Wh stehen und diesen hier eintragen. Der Wert dient rein dem Logging.
 											Wird dieses nicht genutzt oder ist der Wert nicht verfügbar bitte auf "none" setzen, dann wird die Abfrage nicht ausgeführt.
 										</span>
 									</div>
 								</div>
 								<div class="form-row mb-1">
-									<label for="vzloggerekwhline" class="col-md-4 col-form-label">Vzlogger Einspeisung kWh Zeile</label>
+									<label for="vzloggerekwhline" class="col-md-4 col-form-label">Vzlogger Einspeisung Wh Zeile</label>
 									<div class="col">
 										<input class="form-control" type="text" name="vzloggerekwhline" id="vzloggerekwhline" value="<?php echo $vzloggerekwhlineold ?>">
 										<span class="form-text small">
 											Gültige Werte z.B. Zahl. Bitte auf der Shell ausführen: "curl -s IPdesVZLogger:Port/ | jq .|cat -n"<br>
-											Nun zählen in welcher Zeile die Gesamt eingespeisten kWh stehen und diesen hier eintragen.
+											Nun zählen in welcher Zeile die Gesamt eingespeisten Wh stehen und diesen hier eintragen.
 										</span>
 									</div>
 								</div>
@@ -727,11 +727,20 @@
 								<div class="col">
 									<input class="form-control" type="text" pattern="^((\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.){3}(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])$" name="solaredgeip" id="solaredgeip" value="<?php echo $solaredgeipold ?>">
 									<span class="form-text small">
-										Gültige Werte: IP.<br>
+										IP Adresse des Solaredge Wechselrichters im lokalen Netzwerk.<br>
 										Hierfür muss ein EVU Zähler am SolarEdge Wechselrichter per Modbus angebunden sein.<br>
 										Ebenso muss ModbusTCP am Wechselrichter aktiviert werden.<br>
 										Der Zähler muss an erster Position im Wechselrichter konfiguriert sein, sonst ist eine Auslesung nicht möglich.<br>
 										Es ist die IP-Adresse des SolarEdge Wechselrichters anzugeben.
+									</span>
+								</div>
+							</div>
+							<div class="form-row mb-1">
+								<label for="solaredgemodbusport" class="col-md-4 col-form-label">IP Adresse</label>
+								<div class="col">
+									<input class="form-control" type="number" min="1" step="1" name="solaredgemodbusport" id="solaredgemodbusport" value="<?php echo (empty($solaredgemodbusport)?'502':$solaredgemodbusport) ?>">
+									<span class="form-text small">
+										Modbus/TCP Port der im Wechselrichter konfiguriert ist. Standardmäßig ist das 502 oder 1502.<br>
 									</span>
 								</div>
 							</div>

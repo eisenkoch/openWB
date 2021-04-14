@@ -307,6 +307,19 @@ else
 	sudo python3 $OPENWBBASEDIR/runs/modbusserver/modbusserver.py &
 fi
 
+# check if our ocpp server is running
+if (( ocpp_enable == 1 )); then
+	if ! [ -x "$(command -v nmcli)" ]; then
+		if ps ax |grep -v grep |grep "python3.7 /var/www/html/openWB/runs/OCPP_ChargePoint.py" > /dev/null
+		then
+			echo "test" > /dev/null
+		else
+			sudo python3.7 /var/www/html/openWB/runs/OCPP_ChargePoint.py &
+		fi
+	fi
+fi
+
+
 #Pingchecker
 if (( $pingcheckactive == 1 )); then
 	$OPENWBBASEDIR/runs/pingcheck.sh &
