@@ -22,8 +22,14 @@ from ocpp.exceptions import OCPPError, NotImplementedError
 from ocpp.v16.enums import Action
 from ocpp.routing import on
 from base64 import b64encode
+from datetime import datetime
 
 logging.basicConfig(filename='/var/www/html/openWB/ramdisk/ocpp.log', level=logging.INFO)
+
+# get Version ID for firmwareVersion
+fd = open('/var/www/html/openWB/web/version', 'r')
+version = fd.readline()
+fd.close()
 
 # get OCPP module config from openWB config
 fd = open('/var/www/html/openWB/openwb.conf', 'r')
@@ -66,6 +72,8 @@ else:
     headers = ''
 
 
+# https://python-forum.io/Thread-Websocket-conection-closes-abnormally
+
 class ChargePoint(cp):
     async def send_heartbeat(self, interval):
         request = call.HeartbeatPayload()
@@ -76,7 +84,8 @@ class ChargePoint(cp):
     async def send_boot_notification(self):
         request = call.BootNotificationPayload(
             charge_point_model="openWB",
-            charge_point_vendor="snaptec"
+            charge_point_vendor="snaptec",
+            firmware_version=version
         )
 
         response = await self.call(request)
@@ -84,13 +93,73 @@ class ChargePoint(cp):
             logging.info('OCPP Connected to central system')
             await self.send_heartbeat(response.interval)
 
+    async def running_state(self):
+        keep_running = True
+        while keep_running:
+            fd = open('/var/www/html/openWB/ramdisk/lp1enabled', 'r')
+            state = fd.readline()
+            fd.close()
+            if state == '1':
+                # print("Push Button released")
+                # await self.Send_StatusNotification_available()
+                await self.Start_Transaction()
+                break
+                # time.sleep(10)
+                # continue
+            else:
+                # print("Push Button pressed")
+                # await self.Send_StatusNotification_unavailable()
+                break
+                # time.sleep(10)
+                # continue
+
+    async def Start_Transaction(self):
+        request = call.StartTransactionPayload(
+            connector_id=1,
+            id_tag='11111',
+            meter_start=0,
+            timestamp=datetime.utcnow().isoformat()
+        )
+        response = await self.call(request)
+        logging.info(response)
+
+    async def Send_StatusNotification_available(self):
+        request = call.StatusNotificationPayload(
+            connector_id=0,
+            error_code="NoError",
+            status="Available"
+        )
+        response = await self.call(request)
+        print("Charge Point Available")
+
+    # charge cable connected - status change to unavailable
+    async def Send_StatusNotification_unavailable(self):
+        request = call.StatusNotificationPayload(
+            connector_id=0,
+            error_code="NoError",
+            status="Unavailable"
+        )
+        response = await self.call(request)
+        print("Charge Point Occupied")
+
+    # charge cable connected, fault - status change to fault
+    async def Send_StatusNotification_fault(self):
+        request = call.StatusNotificationPayload(
+            connector_id=0,
+            error_code="InternalError",
+            status="Faulted"
+        )
+        response = await self.call(request)
+        print("Charger Internal Error")
+
+    # --------------------------------------------
+
     @on(Action.Reset)
     async def on_station_reset(self, type):
         print(type)
 
     @on(Action.TriggerMessage)
     async def on_TriggerMessage(self, requested_message, connector_id):
-        # print (requested_message)
         request = call.TriggerMessage()
         await self.call(request)
 
@@ -110,6 +179,21 @@ class ChargePoint(cp):
     async def on_GetConfiguration(self):
         print(a)
 
+    @on(Action.UnlockConnector)
+    async def on_UnlockConnector(self):
+        print(a)
+
+    @on(Action.RemoteStartTransaction)
+    async def on_RemoteStartTransaction(self):
+        print(a)
+
+    @on(Action.ReserveNow)
+    async def on_ReserveNow(self):
+        print(a)
+
+    @on(Action.RemoteStopTransaction)
+    async def on_RemoteStopTransaction(self):
+        print(a)
 
 async def main():
     async with websockets.connect(
@@ -120,7 +204,7 @@ async def main():
     ) as ws:
         cp = ChargePoint('CP_1', ws)
 
-        await asyncio.gather(cp.start(), cp.send_boot_notification())
+        await asyncio.gather(cp.start(), cp.send_boot_notification(), cp.running_state())
 
 
 if __name__ == '__main__':
