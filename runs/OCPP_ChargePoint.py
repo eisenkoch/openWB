@@ -3,6 +3,7 @@ import json
 import logging
 import sched
 import time
+import os
 
 try:
     import websockets
@@ -10,17 +11,18 @@ except ModuleNotFoundError:
     print("This example relies on the 'websockets' package.")
     print("Please install it by running: ")
     print()
-    print(" $ pip install websockets")
+    print(" $ pip3 install websockets")
     import sys
 
     sys.exit(1)
 
-from ocpp.v16 import call
-from ocpp.v16 import ChargePoint as cp
+# from ocpp.v16 import call
+from ocpp.v16 import call_result, call, ChargePoint as cp
+# from ocpp.v16 import ChargePoint as cp
 from ocpp.v16.enums import RegistrationStatus
 from ocpp.exceptions import OCPPError, NotImplementedError
 from ocpp.v16.enums import Action
-from ocpp.routing import on
+from ocpp.routing import on, after
 from base64 import b64encode
 from datetime import datetime
 
@@ -95,29 +97,47 @@ class ChargePoint(cp):
 
     async def running_state(self):
         keep_running = True
+        with open('/var/www/html/openWB/ramdisk/lp1enabled', 'r') as fd:
+            old_state = fd.readline()
+        transaction_id = None
         while keep_running:
-            fd = open('/var/www/html/openWB/ramdisk/lp1enabled', 'r')
-            state = fd.readline()
-            fd.close()
-            if state == '1':
-                # print("Push Button released")
-                # await self.Send_StatusNotification_available()
-                await self.Start_Transaction()
-                break
+            # print('open file')
+            with open('/var/www/html/openWB/ramdisk/lp1enabled', 'r') as fd:
+                current_state = fd.readline()
+            if old_state == current_state:
+                # print('Sleeping ...')
+                await asyncio.sleep(5)
+            elif current_state == '1':
+                # print('start transaction')
+                old_state = current_state
+                transaction_id = await self.Start_Transaction()
                 # time.sleep(10)
                 # continue
+            elif current_state == '0':
+                # print('stop')
+                old_state = current_state
+                if transaction_id is not None:
+                    await self.Stop_Transaction(transaction_id)
+                    transaction_id = None
+                # Stop!
             else:
-                # print("Push Button pressed")
-                # await self.Send_StatusNotification_unavailable()
                 break
-                # time.sleep(10)
-                # continue
 
     async def Start_Transaction(self):
         request = call.StartTransactionPayload(
             connector_id=1,
-            id_tag='11111',
+            id_tag='1111',
             meter_start=0,
+            timestamp=datetime.utcnow().isoformat()
+        )
+        response = await self.call(request)
+        logging.info(response)
+        return response.transaction_id
+
+    async def Stop_Transaction(self, transaction_id):
+        request = call.StopTransactionPayload(
+            meter_stop=10,
+            transaction_id=transaction_id,
             timestamp=datetime.utcnow().isoformat()
         )
         response = await self.call(request)
@@ -125,7 +145,7 @@ class ChargePoint(cp):
 
     async def Send_StatusNotification_available(self):
         request = call.StatusNotificationPayload(
-            connector_id=0,
+            connector_id=1,
             error_code="NoError",
             status="Available"
         )
@@ -135,7 +155,7 @@ class ChargePoint(cp):
     # charge cable connected - status change to unavailable
     async def Send_StatusNotification_unavailable(self):
         request = call.StatusNotificationPayload(
-            connector_id=0,
+            connector_id=1,
             error_code="NoError",
             status="Unavailable"
         )
@@ -145,7 +165,7 @@ class ChargePoint(cp):
     # charge cable connected, fault - status change to fault
     async def Send_StatusNotification_fault(self):
         request = call.StatusNotificationPayload(
-            connector_id=0,
+            connector_id=1,
             error_code="InternalError",
             status="Faulted"
         )
@@ -156,7 +176,13 @@ class ChargePoint(cp):
 
     @on(Action.Reset)
     async def on_station_reset(self, type):
-        print(type)
+        return call_result.ResetPayload(
+            status="Accepted"
+        )
+
+    @after(Action.Reset)
+    async def Reset(self, type):
+        os.system("sudo reboot")
 
     @on(Action.TriggerMessage)
     async def on_TriggerMessage(self, requested_message, connector_id):
@@ -169,19 +195,28 @@ class ChargePoint(cp):
 
     @on(Action.ChangeAvailability)
     async def on_ChangeAvailability(self):
+        # ToDo
         print(a)
 
     @on(Action.SendLocalList)
     async def on_SendLocalList(self):
+        # ToDo
         print(a)
 
     @on(Action.GetConfiguration)
-    async def on_GetConfiguration(self):
-        print(a)
+    async def on_GetConfiguration(self, key):
+        # ToDo => speichern und lesen der Config in File
+        return call_result.GetConfigurationPayload(
+            [
+                {"key": "AllowOfflineTxForUnknownId",   "readonly": True,   "value": "True"},
+                {"key": "HeartbeatInterval",            "readonly": True,   "value": "1800"},
+                {"key": "LocalAuthorizeOffline",        "readonly": True,   "value": "True"}
+            ]
+        )
 
     @on(Action.UnlockConnector)
-    async def on_UnlockConnector(self):
-        print(a)
+    async def on_UnlockConnector(self, connector_id):
+        print(connector_id)
 
     @on(Action.RemoteStartTransaction)
     async def on_RemoteStartTransaction(self):
@@ -191,15 +226,32 @@ class ChargePoint(cp):
     async def on_ReserveNow(self):
         print(a)
 
+    @on(Action.ChangeConfiguration)
+    async def on_ChangeConfiguration(self, key, value):
+        print(key, value)
+
     @on(Action.RemoteStopTransaction)
-    async def on_RemoteStopTransaction(self):
-        print(a)
+    async def on_RemoteStopTransaction(self, transaction_id):
+        print(transaction_id)
+        return call_result.RemoteStopTransactionPayload(
+            status="Accepted"
+        )
+
+    @after(Action.RemoteStopTransaction)
+    async def Stop_Transaction(self, transaction_id):
+        request = call.StopTransactionPayload(
+            meter_stop=0,
+            transaction_id=transaction_id,
+            timestamp=datetime.utcnow().isoformat()
+        )
+        response = await self.call(request)
+        logging.info(response)
+
 
 async def main():
     async with websockets.connect(
             ocpp_endpoint_url,
             extra_headers=[headers],
-            # extra_headers=[basic_auth_header(ocpp_bAuth_User, ocpp_bAuth_Password)],
             subprotocols=['ocpp1.6']
     ) as ws:
         cp = ChargePoint('CP_1', ws)
@@ -211,7 +263,10 @@ if __name__ == '__main__':
     try:
         # asyncio.run() is used when running this example with Python 3.7 and
         # higher.
-        asyncio.run(main())
+        try:
+            asyncio.run(main())
+        except KeyboardInterrupt:
+            pass
     except AttributeError:
         # For Python 3.6 a bit more code is required to run the main() task on
         # an event loop.
